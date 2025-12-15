@@ -5,6 +5,8 @@ const nextConfig = {
     images: {
         unoptimized: true, // Required for static export
     },
+    // Force a new build to sync GitHub Actions
+    trailingSlash: true,
 };
 
 module.exports = nextConfig;

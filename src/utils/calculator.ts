@@ -33,8 +33,10 @@ export interface EstimationResult {
 const DOOR_DEDUCTION = 2.0; // sq meters
 const WINDOW_DEDUCTION = 1.5; // sq meters
 
+export type InputDimensions = RoomDimensions | { totalWallArea: number };
+
 export function calculatePaintEstimate(
-    dimensions: RoomDimensions,
+    dimensions: InputDimensions,
     wallProduct: PaintProduct,
     trimProduct: PaintProduct | null,
     coats: number = 2,
@@ -42,14 +44,34 @@ export function calculatePaintEstimate(
     numWindows: number = 0,
     includeCeiling: boolean = false
 ): EstimationResult {
-    // 1. Calculate Wall Area: 2 * (W + L) * H
-    const perimeter = 2 * (dimensions.width + dimensions.length);
-    let grossWallArea = perimeter * dimensions.height;
+    let grossWallArea = 0;
 
-    // 2. Ceiling Area: W * L
-    if (includeCeiling) {
-        grossWallArea += dimensions.width * dimensions.length;
+    // 1. Determine Wall Area
+    if ('totalWallArea' in dimensions) {
+        grossWallArea = dimensions.totalWallArea;
+    } else {
+        // 1. Calculate Wall Area: 2 * (W + L) * H
+        const perimeter = 2 * (dimensions.width + dimensions.length);
+        grossWallArea = perimeter * dimensions.height;
+
+        // 2. Ceiling Area: W * L (Only added for dimensions mode)
+        if (includeCeiling) {
+            grossWallArea += dimensions.width * dimensions.length;
+        }
     }
+
+    // For trim calculation, we need perimeter. If direct area is used, we estimate perimeter?
+    // Or just skip trim/perimeter logic if dimensions unknown?
+    // Let's approximate or just fallback safely.
+    // If we only have Area, calculating perimeter is impossible accurately. 
+    // We will assume a standard room ratio if needed, or better, make trim optional/simplified in Area mode.
+    // For now, let's derive a 'mock' perimeter from area assuming square room 2.4m high for trim estimation purposes if dimensions missing.
+    // height = 2.4
+    // perimeter = Area / 2.4
+
+    const perimeter = 'width' in dimensions
+        ? 2 * (dimensions.width + dimensions.length)
+        : grossWallArea / 2.4; // Rough estimator for skirting
 
     // 3. Deductions & Net Area
     const deductionArea = (numDoors * DOOR_DEDUCTION) + (numWindows * WINDOW_DEDUCTION);

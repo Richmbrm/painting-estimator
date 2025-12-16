@@ -6,13 +6,21 @@ import { SUPPLIER_DATA, PaintProduct, getProductById } from '../utils/supplier_d
 import { WINTER_TRENDS } from '../utils/trends';
 
 export default function Home() {
+  // Filter products for dropdowns
+  const wallProducts = SUPPLIER_DATA.filter(p => p.type === 'wall');
+  const trimProducts = SUPPLIER_DATA.filter(p => p.type === 'trim');
+
+  // Input Mode state
+  const [inputMode, setInputMode] = useState<'dimensions' | 'area'>('dimensions');
+  const [customWallArea, setCustomWallArea] = useState<number | ''>('');
+
   const [width, setWidth] = useState<number | ''>(4); // meters (approx 13ft)
-  const [length, setLength] = useState<number | ''>(4); // meters
+  const [length, setLength] = useState<number | ''>(6); // meters (approx 20ft)
   const [height, setHeight] = useState<number | ''>(2.4); // meters (approx 8ft)
 
   // Default selections
-  const [wallProductId, setWallProductId] = useState<string>('wall_standard');
-  const [trimProductId, setTrimProductId] = useState<string>('trim_satin');
+  const [wallProductId, setWallProductId] = useState<string>(wallProducts[0].id);
+  const [trimProductId, setTrimProductId] = useState<string>(trimProducts[0].id);
 
   const [coats, setCoats] = useState<number>(2);
   const [includeCeiling, setIncludeCeiling] = useState<boolean>(true);
@@ -23,32 +31,43 @@ export default function Home() {
 
   const [result, setResult] = useState<EstimationResult | null>(null);
 
-  // Filter products for dropdowns
-  const wallProducts = SUPPLIER_DATA.filter(p => p.type === 'wall');
-  const trimProducts = SUPPLIER_DATA.filter(p => p.type === 'trim');
-
   useEffect(() => {
     const wallProduct = getProductById(wallProductId);
     const trimProduct = includeTrim ? getProductById(trimProductId) : null;
 
     if (!wallProduct) return; // Should not happen with defaults
 
-    // Safety check: ensure all dimensions are valid numbers
-    if (width === '' || length === '' || height === '') {
-      return;
+    // Calculation Logic Selection
+    let dimensions: { width: number; length: number; height: number } | { totalWallArea: number } | null = null;
+
+    if (inputMode === 'dimensions') {
+      // Safety check: ensure all dimensions are valid numbers
+      if (width === '' || length === '' || height === '') {
+        return;
+      }
+      dimensions = { width: Number(width), length: Number(length), height: Number(height) };
+    } else {
+      // Area mode
+      if (customWallArea === '') {
+        return;
+      }
+      dimensions = { totalWallArea: Number(customWallArea) };
     }
 
+    if (!dimensions) return;
+
     const res = calculatePaintEstimate(
-      { width: Number(width), length: Number(length), height: Number(height) },
+      dimensions,
       wallProduct,
       trimProduct || null,
       coats,
       numDoors === '' ? 0 : numDoors,
       numWindows === '' ? 0 : numWindows,
-      includeCeiling
+      // In Area mode, we disable specific ceiling logic (assumed in total) or force false
+      inputMode === 'dimensions' ? includeCeiling : false
     );
     setResult(res);
-  }, [width, length, height, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim]);
+  }, [width, length, height, customWallArea, inputMode, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim]);
 
   // Helper for safe number input updates
   const handleDimensionChange = (
@@ -99,43 +118,96 @@ export default function Home() {
         </header>
 
         <div className="card">
+          {/* Mode Toggle */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+            <button
+              onClick={() => setInputMode('dimensions')}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '2rem',
+                border: 'none',
+                background: inputMode === 'dimensions' ? 'var(--primary)' : 'var(--surface-2)',
+                color: inputMode === 'dimensions' ? 'white' : 'var(--text-main)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              By Dimensions
+            </button>
+            <button
+              onClick={() => setInputMode('area')}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '2rem',
+                border: 'none',
+                background: inputMode === 'area' ? 'var(--primary)' : 'var(--surface-2)',
+                color: inputMode === 'area' ? 'white' : 'var(--text-main)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              By Total Area
+            </button>
+          </div>
+
           <div className="input-group">
-            <label>Room Dimensions (Meters)</label>
-            <div className="input-row">
-              <div className="dimension-field">
-                <span className="field-label">Length</span>
-                <input
-                  type="number"
-                  placeholder="0.0"
-                  value={length}
-                  onChange={(e) => handleDimensionChange(setLength, e.target.value)}
-                  min="0"
-                  step="0.1"
-                />
+            <label>
+              {inputMode === 'dimensions' ? 'Room Dimensions (Meters)' : 'Total Wall Area (sq meters)'}
+            </label>
+
+            {inputMode === 'dimensions' ? (
+              <div className="input-row">
+                <div className="dimension-field">
+                  <span className="field-label">Length</span>
+                  <input
+                    type="number"
+                    placeholder="0.0"
+                    value={length}
+                    onChange={(e) => handleDimensionChange(setLength, e.target.value)}
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+                <div className="dimension-field">
+                  <span className="field-label">Width</span>
+                  <input
+                    type="number"
+                    placeholder="0.0"
+                    value={width}
+                    onChange={(e) => handleDimensionChange(setWidth, e.target.value)}
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+                <div className="dimension-field">
+                  <span className="field-label">Height</span>
+                  <input
+                    type="number"
+                    placeholder="0.0"
+                    value={height}
+                    onChange={(e) => handleDimensionChange(setHeight, e.target.value)}
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
               </div>
-              <div className="dimension-field">
-                <span className="field-label">Width</span>
-                <input
-                  type="number"
-                  placeholder="0.0"
-                  value={width}
-                  onChange={(e) => handleDimensionChange(setWidth, e.target.value)}
-                  min="0"
-                  step="0.1"
-                />
+            ) : (
+              <div className="input-row">
+                <div className="dimension-field" style={{ width: '100%' }}>
+                  <span className="field-label">Total Area (m²)</span>
+                  <input
+                    type="number"
+                    placeholder="e.g. 40"
+                    value={customWallArea}
+                    onChange={(e) => handleDimensionChange(setCustomWallArea, e.target.value)}
+                    min="0"
+                    style={{ fontSize: '1.2rem', padding: '1rem' }}
+                  />
+                </div>
               </div>
-              <div className="dimension-field">
-                <span className="field-label">Height</span>
-                <input
-                  type="number"
-                  placeholder="0.0"
-                  value={height}
-                  onChange={(e) => handleDimensionChange(setHeight, e.target.value)}
-                  min="0"
-                  step="0.1"
-                />
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="input-row">
@@ -161,14 +233,16 @@ export default function Home() {
           </div>
 
           <div className="checkbox-group">
-            <label className="checkbox-visual">
-              <input
-                type="checkbox"
-                checked={includeCeiling}
-                onChange={(e) => setIncludeCeiling(e.target.checked)}
-              />
-              Include Ceiling (Same as Wall)
-            </label>
+            {inputMode === 'dimensions' && (
+              <label className="checkbox-visual">
+                <input
+                  type="checkbox"
+                  checked={includeCeiling}
+                  onChange={(e) => setIncludeCeiling(e.target.checked)}
+                />
+                Include Ceiling (Same as Wall)
+              </label>
+            )}
             <label className="checkbox-visual">
               <input
                 type="checkbox"
@@ -216,6 +290,11 @@ export default function Home() {
                 />
               </div>
             </div>
+            {inputMode === 'area' && (
+              <small style={{ display: 'block', marginTop: '0.5rem', color: 'var(--text-muted)' }}>
+                * Deductions are subtracted from your total area input above.
+              </small>
+            )}
           </div>
 
           {/* Results Panel */}

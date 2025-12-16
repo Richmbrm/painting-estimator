@@ -18,8 +18,8 @@ export default function Home() {
   const [includeCeiling, setIncludeCeiling] = useState<boolean>(true);
   const [includeTrim, setIncludeTrim] = useState<boolean>(true);
 
-  const [numDoors, setNumDoors] = useState<number>(1);
-  const [numWindows, setNumWindows] = useState<number>(1);
+  const [numDoors, setNumDoors] = useState<number | ''>(1);
+  const [numWindows, setNumWindows] = useState<number | ''>(1);
 
   const [result, setResult] = useState<EstimationResult | null>(null);
 
@@ -43,8 +43,8 @@ export default function Home() {
       wallProduct,
       trimProduct || null,
       coats,
-      numDoors,
-      numWindows,
+      numDoors === '' ? 0 : numDoors,
+      numWindows === '' ? 0 : numWindows,
       includeCeiling
     );
     setResult(res);
@@ -200,7 +200,8 @@ export default function Home() {
                 <input
                   type="number"
                   value={numDoors}
-                  onChange={(e) => setNumDoors(Math.max(0, parseInt(e.target.value) || 0))}
+                  placeholder="0"
+                  onChange={(e) => handleDimensionChange(setNumDoors, e.target.value)}
                   min="0"
                 />
               </div>
@@ -209,7 +210,8 @@ export default function Home() {
                 <input
                   type="number"
                   value={numWindows}
-                  onChange={(e) => setNumWindows(Math.max(0, parseInt(e.target.value) || 0))}
+                  placeholder="0"
+                  onChange={(e) => handleDimensionChange(setNumWindows, e.target.value)}
                   min="0"
                 />
               </div>

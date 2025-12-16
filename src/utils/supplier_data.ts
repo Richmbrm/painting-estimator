@@ -2,7 +2,7 @@ export interface PaintProduct {
     id: string;
     name: string;
     brand: string;
-    type: 'wall' | 'trim';
+    type: 'wall' | 'trim' | 'primer';
     pricePerLitre: number;
     coveragePerLitre: number; // m2/L
     description: string;
@@ -65,6 +65,17 @@ export const SUPPLIER_DATA: PaintProduct[] = [
         pricePerLitre: 28.00,
         coveragePerLitre: 12,
         description: 'Low sheen finish for woodwork and metal.'
+    },
+
+    // --- Primer/Undercoat ---
+    {
+        id: 'trim_primer',
+        name: 'Wood Primer & Undercoat',
+        brand: 'Generic Trade',
+        type: 'primer',
+        pricePerLitre: 12.00,
+        coveragePerLitre: 12,
+        description: 'Essential base for bare wood or significant colour changes.'
     }
 ];
 

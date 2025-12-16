@@ -22,6 +22,12 @@ export interface EstimationResult {
         product: PaintProduct;
     };
 
+    primerPaint?: {
+        litresNeeded: number;
+        cost: number;
+        product: PaintProduct;
+    };
+
     totalEstimatedCost: number;
 
     estimatedLaborCost: {
@@ -45,7 +51,9 @@ export function calculatePaintEstimate(
     numDoors: number = 0,
     numWindows: number = 0,
     includeCeiling: boolean = false,
-    laborRatePerSqM: number = 16 // Default to average
+    laborRatePerSqM: number = 16, // Default to average
+    includePrimer: boolean = false,
+    primerProduct: PaintProduct | null = null
 ): EstimationResult {
     let grossWallArea = 0;
 
@@ -112,7 +120,31 @@ export function calculatePaintEstimate(
         };
     }
 
-    // 6. Labor Cost Estimation (UK Average £12 - £20 per sqm for prep + 2 coats)
+    // 6. Primer Paint Calc (Optional)
+    let primerResult: EstimationResult['primerPaint'];
+    if (includePrimer && primerProduct) {
+        // Assume 1 coat of primer is enough for basic work
+        // Use calculate trim area logic (which we don't have stored separately, let's refactor slightly to get area)
+        // Refactor: We need 'totalTrimArea' available.
+
+        // RE-CALC AREA (to avoid major refactor, just re-use logic)
+        const skirtingArea = perimeter * 0.15;
+        const totalItems = numDoors + numWindows;
+        const doorFrameArea = totalItems * 0.5;
+        const totalTrimArea = skirtingArea + doorFrameArea;
+
+        const primerCoverageNeeded = totalTrimArea * 1; // 1 coat
+        const primerLitres = Math.ceil(primerCoverageNeeded / primerProduct.coveragePerLitre);
+        const actualPrimerLitres = Math.max(1, primerLitres);
+
+        primerResult = {
+            litresNeeded: actualPrimerLitres,
+            cost: actualPrimerLitres * primerProduct.pricePerLitre,
+            product: primerProduct
+        };
+    }
+
+    // 7. Labor Cost Estimation (UK Average £12 - £20 per sqm for prep + 2 coats)
     const laborMin = paintableArea * 12;
     const laborMax = paintableArea * 20;
     const preciseLaborCost = paintableArea * laborRatePerSqM;
@@ -129,7 +161,9 @@ export function calculatePaintEstimate(
 
         trimPaint: trimResult,
 
-        totalEstimatedCost: wallCost + (trimResult?.cost || 0),
+        primerPaint: primerResult,
+
+        totalEstimatedCost: wallCost + (trimResult?.cost || 0) + (primerResult?.cost || 0),
 
         estimatedLaborCost: {
             min: laborMin,

@@ -25,6 +25,7 @@ export default function Home() {
   const [coats, setCoats] = useState<number>(2);
   const [includeCeiling, setIncludeCeiling] = useState<boolean>(true);
   const [includeTrim, setIncludeTrim] = useState<boolean>(true);
+  const [includePrimer, setIncludePrimer] = useState<boolean>(false);
 
   const [numDoors, setNumDoors] = useState<number | ''>(1);
   const [numWindows, setNumWindows] = useState<number | ''>(1);
@@ -36,6 +37,7 @@ export default function Home() {
   useEffect(() => {
     const wallProduct = getProductById(wallProductId);
     const trimProduct = includeTrim ? getProductById(trimProductId) : null;
+    const primerProduct = includePrimer ? getProductById('trim_primer') : null;
 
     if (!wallProduct) return; // Should not happen with defaults
 
@@ -67,10 +69,12 @@ export default function Home() {
       numWindows === '' ? 0 : numWindows,
       // In Area mode, we disable specific ceiling logic (assumed in total) or force false
       inputMode === 'dimensions' ? includeCeiling : false,
-      laborRate
+      laborRate,
+      includePrimer,
+      primerProduct || null
     );
     setResult(res);
-  }, [width, length, height, customWallArea, inputMode, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim, laborRate]);
+  }, [width, length, height, customWallArea, inputMode, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim, laborRate, includePrimer]);
 
   // Helper for safe number input updates
   const handleDimensionChange = (
@@ -115,41 +119,24 @@ export default function Home() {
       </Head>
 
       <main>
-        <header style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <header className="header-hero">
           <h1>Paint Material Estimator</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Get a quick estimate for your DIY painting project (UK Standards)</p>
+          <p>Get a quick estimate for your DIY painting project (UK Standards)</p>
         </header>
 
         <div className="card">
           {/* Mode Toggle */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+          {/* Mode Toggle */}
+          <div className="toggle-group">
             <button
               onClick={() => setInputMode('dimensions')}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '2rem',
-                border: 'none',
-                background: inputMode === 'dimensions' ? 'var(--primary)' : 'var(--surface-2)',
-                color: inputMode === 'dimensions' ? 'white' : 'var(--text-main)',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
+              className={`btn-toggle ${inputMode === 'dimensions' ? 'active' : ''}`}
             >
               By Dimensions
             </button>
             <button
               onClick={() => setInputMode('area')}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '2rem',
-                border: 'none',
-                background: inputMode === 'area' ? 'var(--primary)' : 'var(--surface-2)',
-                color: inputMode === 'area' ? 'white' : 'var(--text-main)',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
+              className={`btn-toggle ${inputMode === 'area' ? 'active' : ''}`}
             >
               By Total Area
             </button>
@@ -254,6 +241,17 @@ export default function Home() {
               />
               Include Trim/Baseboards
             </label>
+
+            {includeTrim && (
+              <label className="checkbox-visual" style={{ marginLeft: '1.5rem', fontSize: '0.9rem' }}>
+                <input
+                  type="checkbox"
+                  checked={includePrimer}
+                  onChange={(e) => setIncludePrimer(e.target.checked)}
+                />
+                Include Primer/Undercoat
+              </label>
+            )}
           </div>
 
           {includeTrim && (
@@ -294,7 +292,7 @@ export default function Home() {
               </div>
             </div>
             {inputMode === 'area' && (
-              <small style={{ display: 'block', marginTop: '0.5rem', color: 'var(--text-muted)' }}>
+              <small className="deductions-note">
                 * Deductions are subtracted from your total area input above.
               </small>
             )}
@@ -332,6 +330,18 @@ export default function Home() {
                 </div>
               )}
 
+              {result.primerPaint && (
+                <div className="result-item" style={{ marginTop: '1rem' }}>
+                  <div>
+                    <span className="result-label">Primer/Undercoat</span>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      {result.primerPaint.litresNeeded} Litres required
+                    </div>
+                  </div>
+                  <div className="result-value">£{result.primerPaint.cost.toFixed(2)}</div>
+                </div>
+              )}
+
               <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
 
               <div className="result-item" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
@@ -351,8 +361,8 @@ export default function Home() {
                       <span className="result-label" style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Professional Labor Estimate</span>
 
                       {/* Interactive Labor Rate Control */}
-                      <div style={{ background: 'var(--surface-1)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginTop: '0.5rem' }}>
-                        <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                      <div className="labor-control-panel">
+                        <label className="labor-header">
                           <span>Adjust Hourly/Area Rate:</span>
                           <strong>£{laborRate}/m²</strong>
                         </label>
@@ -363,9 +373,8 @@ export default function Home() {
                           step="1"
                           value={laborRate}
                           onChange={(e) => setLaborRate(Number(e.target.value))}
-                          style={{ width: '100%', cursor: 'pointer' }}
                         />
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                        <div className="range-labels">
                           <span>£10 (Budget)</span>
                           <span>£40 (High-Spec)</span>
                         </div>

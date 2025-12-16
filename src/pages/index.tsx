@@ -104,48 +104,36 @@ export default function Home() {
             <div className="input-row">
               <div className="dimension-field">
                 <span className="field-label">Length</span>
-                <div className="number-control">
-                  <button onClick={() => adjustDimension(setLength, length, -0.1)}>-</button>
-                  <input
-                    type="number"
-                    placeholder="0.0"
-                    value={length}
-                    onChange={(e) => handleDimensionChange(setLength, e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
-                  <button onClick={() => adjustDimension(setLength, length, 0.1)}>+</button>
-                </div>
+                <input
+                  type="number"
+                  placeholder="0.0"
+                  value={length}
+                  onChange={(e) => handleDimensionChange(setLength, e.target.value)}
+                  min="0"
+                  step="0.1"
+                />
               </div>
               <div className="dimension-field">
                 <span className="field-label">Width</span>
-                <div className="number-control">
-                  <button onClick={() => adjustDimension(setWidth, width, -0.1)}>-</button>
-                  <input
-                    type="number"
-                    placeholder="0.0"
-                    value={width}
-                    onChange={(e) => handleDimensionChange(setWidth, e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
-                  <button onClick={() => adjustDimension(setWidth, width, 0.1)}>+</button>
-                </div>
+                <input
+                  type="number"
+                  placeholder="0.0"
+                  value={width}
+                  onChange={(e) => handleDimensionChange(setWidth, e.target.value)}
+                  min="0"
+                  step="0.1"
+                />
               </div>
               <div className="dimension-field">
                 <span className="field-label">Height</span>
-                <div className="number-control">
-                  <button onClick={() => adjustDimension(setHeight, height, -0.1)}>-</button>
-                  <input
-                    type="number"
-                    placeholder="0.0"
-                    value={height}
-                    onChange={(e) => handleDimensionChange(setHeight, e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
-                  <button onClick={() => adjustDimension(setHeight, height, 0.1)}>+</button>
-                </div>
+                <input
+                  type="number"
+                  placeholder="0.0"
+                  value={height}
+                  onChange={(e) => handleDimensionChange(setHeight, e.target.value)}
+                  min="0"
+                  step="0.1"
+                />
               </div>
             </div>
           </div>
@@ -209,29 +197,21 @@ export default function Home() {
             <div className="input-row">
               <div className="dimension-field">
                 <span className="field-label">Doors (approx 2m²)</span>
-                <div className="number-control">
-                  <button onClick={() => adjustCount(setNumDoors, numDoors, -1)}>-</button>
-                  <input
-                    type="number"
-                    value={numDoors}
-                    onChange={(e) => setNumDoors(Math.max(0, parseInt(e.target.value) || 0))}
-                    min="0"
-                  />
-                  <button onClick={() => adjustCount(setNumDoors, numDoors, 1)}>+</button>
-                </div>
+                <input
+                  type="number"
+                  value={numDoors}
+                  onChange={(e) => setNumDoors(Math.max(0, parseInt(e.target.value) || 0))}
+                  min="0"
+                />
               </div>
               <div className="dimension-field">
                 <span className="field-label">Windows (approx 1.5m²)</span>
-                <div className="number-control">
-                  <button onClick={() => adjustCount(setNumWindows, numWindows, -1)}>-</button>
-                  <input
-                    type="number"
-                    value={numWindows}
-                    onChange={(e) => setNumWindows(Math.max(0, parseInt(e.target.value) || 0))}
-                    min="0"
-                  />
-                  <button onClick={() => adjustCount(setNumWindows, numWindows, 1)}>+</button>
-                </div>
+                <input
+                  type="number"
+                  value={numWindows}
+                  onChange={(e) => setNumWindows(Math.max(0, parseInt(e.target.value) || 0))}
+                  min="0"
+                />
               </div>
             </div>
           </div>

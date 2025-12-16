@@ -6,9 +6,9 @@ import { SUPPLIER_DATA, PaintProduct, getProductById } from '../utils/supplier_d
 import { WINTER_TRENDS } from '../utils/trends';
 
 export default function Home() {
-  const [width, setWidth] = useState<number>(4); // meters (approx 13ft)
-  const [length, setLength] = useState<number>(4); // meters
-  const [height, setHeight] = useState<number>(2.4); // meters (approx 8ft)
+  const [width, setWidth] = useState<number | ''>(4); // meters (approx 13ft)
+  const [length, setLength] = useState<number | ''>(4); // meters
+  const [height, setHeight] = useState<number | ''>(2.4); // meters (approx 8ft)
 
   // Default selections
   const [wallProductId, setWallProductId] = useState<string>('wall_standard');
@@ -17,7 +17,9 @@ export default function Home() {
   const [coats, setCoats] = useState<number>(2);
   const [includeCeiling, setIncludeCeiling] = useState<boolean>(true);
   const [includeTrim, setIncludeTrim] = useState<boolean>(true);
-  const [numDoorsWindows, setNumDoorsWindows] = useState<number>(1);
+
+  const [numDoors, setNumDoors] = useState<number>(1);
+  const [numWindows, setNumWindows] = useState<number>(1);
 
   const [result, setResult] = useState<EstimationResult | null>(null);
 
@@ -31,16 +33,55 @@ export default function Home() {
 
     if (!wallProduct) return; // Should not happen with defaults
 
+    // Safety check: ensure all dimensions are valid numbers
+    if (width === '' || length === '' || height === '') {
+      return;
+    }
+
     const res = calculatePaintEstimate(
-      { width, length, height },
+      { width: Number(width), length: Number(length), height: Number(height) },
       wallProduct,
       trimProduct || null,
       coats,
-      numDoorsWindows,
+      numDoors,
+      numWindows,
       includeCeiling
     );
     setResult(res);
-  }, [width, length, height, wallProductId, trimProductId, coats, numDoorsWindows, includeCeiling, includeTrim]);
+  }, [width, length, height, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim]);
+
+  // Helper for safe number input updates
+  const handleDimensionChange = (
+    setter: (val: number | '') => void,
+    rawVal: string
+  ) => {
+    if (rawVal === '') {
+      setter('');
+      return;
+    }
+    const val = parseFloat(rawVal);
+    if (!isNaN(val)) {
+      setter(val);
+    }
+  };
+
+  const adjustDimension = (
+    setter: (val: number | '') => void,
+    current: number | '',
+    amount: number
+  ) => {
+    const base = current === '' ? 0 : current;
+    const newVal = Math.max(0, parseFloat((base + amount).toFixed(1)));
+    setter(newVal);
+  };
+
+  const adjustCount = (
+    setter: (val: number) => void,
+    current: number,
+    amount: number
+  ) => {
+    setter(Math.max(0, current + amount));
+  };
 
   return (
     <>
@@ -63,36 +104,48 @@ export default function Home() {
             <div className="input-row">
               <div className="dimension-field">
                 <span className="field-label">Length</span>
-                <input
-                  type="number"
-                  placeholder="0.0"
-                  value={length}
-                  onChange={(e) => setLength(Number(e.target.value))}
-                  min="0.5"
-                  step="0.1"
-                />
+                <div className="number-control">
+                  <button onClick={() => adjustDimension(setLength, length, -0.1)}>-</button>
+                  <input
+                    type="number"
+                    placeholder="0.0"
+                    value={length}
+                    onChange={(e) => handleDimensionChange(setLength, e.target.value)}
+                    min="0"
+                    step="0.1"
+                  />
+                  <button onClick={() => adjustDimension(setLength, length, 0.1)}>+</button>
+                </div>
               </div>
               <div className="dimension-field">
                 <span className="field-label">Width</span>
-                <input
-                  type="number"
-                  placeholder="0.0"
-                  value={width}
-                  onChange={(e) => setWidth(Number(e.target.value))}
-                  min="0.5"
-                  step="0.1"
-                />
+                <div className="number-control">
+                  <button onClick={() => adjustDimension(setWidth, width, -0.1)}>-</button>
+                  <input
+                    type="number"
+                    placeholder="0.0"
+                    value={width}
+                    onChange={(e) => handleDimensionChange(setWidth, e.target.value)}
+                    min="0"
+                    step="0.1"
+                  />
+                  <button onClick={() => adjustDimension(setWidth, width, 0.1)}>+</button>
+                </div>
               </div>
               <div className="dimension-field">
                 <span className="field-label">Height</span>
-                <input
-                  type="number"
-                  placeholder="0.0"
-                  value={height}
-                  onChange={(e) => setHeight(Number(e.target.value))}
-                  min="0.5"
-                  step="0.1"
-                />
+                <div className="number-control">
+                  <button onClick={() => adjustDimension(setHeight, height, -0.1)}>-</button>
+                  <input
+                    type="number"
+                    placeholder="0.0"
+                    value={height}
+                    onChange={(e) => handleDimensionChange(setHeight, e.target.value)}
+                    min="0"
+                    step="0.1"
+                  />
+                  <button onClick={() => adjustDimension(setHeight, height, 0.1)}>+</button>
+                </div>
               </div>
             </div>
           </div>
@@ -153,15 +206,34 @@ export default function Home() {
 
           <div className="input-group" style={{ marginTop: '1.5rem' }}>
             <label>Doors & Windows (Deductions)</label>
-            <input
-              type="number"
-              value={numDoorsWindows}
-              onChange={(e) => setNumDoorsWindows(Number(e.target.value))}
-              min="0"
-            />
-            <small style={{ display: 'block', marginTop: '0.5rem', color: 'var(--text-muted)' }}>
-              Approx 2 sq meters deducted per item
-            </small>
+            <div className="input-row">
+              <div className="dimension-field">
+                <span className="field-label">Doors (approx 2m²)</span>
+                <div className="number-control">
+                  <button onClick={() => adjustCount(setNumDoors, numDoors, -1)}>-</button>
+                  <input
+                    type="number"
+                    value={numDoors}
+                    onChange={(e) => setNumDoors(Math.max(0, parseInt(e.target.value) || 0))}
+                    min="0"
+                  />
+                  <button onClick={() => adjustCount(setNumDoors, numDoors, 1)}>+</button>
+                </div>
+              </div>
+              <div className="dimension-field">
+                <span className="field-label">Windows (approx 1.5m²)</span>
+                <div className="number-control">
+                  <button onClick={() => adjustCount(setNumWindows, numWindows, -1)}>-</button>
+                  <input
+                    type="number"
+                    value={numWindows}
+                    onChange={(e) => setNumWindows(Math.max(0, parseInt(e.target.value) || 0))}
+                    min="0"
+                  />
+                  <button onClick={() => adjustCount(setNumWindows, numWindows, 1)}>+</button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Results Panel */}

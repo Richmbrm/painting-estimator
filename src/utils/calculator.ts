@@ -25,14 +25,16 @@ export interface EstimationResult {
     totalEstimatedCost: number;
 }
 
-const WINDOW_DOOR_DEDUCTION = 2; // sq meters average
+const DOOR_DEDUCTION = 2.0; // sq meters
+const WINDOW_DEDUCTION = 1.5; // sq meters
 
 export function calculatePaintEstimate(
     dimensions: RoomDimensions,
     wallProduct: PaintProduct,
     trimProduct: PaintProduct | null,
     coats: number = 2,
-    numDoorsWindows: number = 0,
+    numDoors: number = 0,
+    numWindows: number = 0,
     includeCeiling: boolean = false
 ): EstimationResult {
     // 1. Calculate Wall Area: 2 * (W + L) * H
@@ -45,7 +47,7 @@ export function calculatePaintEstimate(
     }
 
     // 3. Deductions & Net Area
-    const deductionArea = numDoorsWindows * WINDOW_DOOR_DEDUCTION;
+    const deductionArea = (numDoors * DOOR_DEDUCTION) + (numWindows * WINDOW_DEDUCTION);
     const paintableArea = Math.max(0, grossWallArea - deductionArea);
 
     // 4. Wall Paint Calc
@@ -63,7 +65,8 @@ export function calculatePaintEstimate(
         // Linear meters to Sq meters conversion ~ 0.15m height for skirting.
 
         const skirtingArea = perimeter * 0.15; // 15cm high skirting
-        const doorFrameArea = numDoorsWindows * 0.5; // approx 0.5 sqm per door frame/window sill
+        const totalItems = numDoors + numWindows;
+        const doorFrameArea = totalItems * 0.5; // approx 0.5 sqm per door frame/window sill
         const totalTrimArea = skirtingArea + doorFrameArea;
 
         const trimCoverageNeeded = totalTrimArea * coats; // Trim usually needs 2 coats too

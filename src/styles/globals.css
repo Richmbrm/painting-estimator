@@ -148,6 +148,46 @@ select:focus {
   accent-color: var(--primary);
 }
 
+/* Number Control Inputs */
+.number-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.number-control button {
+  width: 40px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-1);
+  border: 1px solid hsl(220, 20%, 85%);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.number-control button:hover {
+  background: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.number-control button:active {
+  transform: translateY(1px);
+  background: var(--surface-2);
+}
+
+.number-control input {
+  text-align: center;
+}
+
 .btn-primary {
   width: 100%;
   padding: 1rem;

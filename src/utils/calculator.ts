@@ -28,6 +28,8 @@ export interface EstimationResult {
         min: number;
         max: number;
     };
+
+    preciseLaborCost: number;
 }
 
 const DOOR_DEDUCTION = 2.0; // sq meters
@@ -42,7 +44,8 @@ export function calculatePaintEstimate(
     coats: number = 2,
     numDoors: number = 0,
     numWindows: number = 0,
-    includeCeiling: boolean = false
+    includeCeiling: boolean = false,
+    laborRatePerSqM: number = 16 // Default to average
 ): EstimationResult {
     let grossWallArea = 0;
 
@@ -83,7 +86,7 @@ export function calculatePaintEstimate(
     const wallCost = wallLitres * wallProduct.pricePerLitre;
 
     // 5. Trim Paint Calc (Optional)
-    let trimResult = undefined;
+    let trimResult: EstimationResult['trimPaint'] = null;
     if (trimProduct) {
         // Rough approximation for trim: 10% of wall area is usually a safe bet for skirting/frames in a standard room
         // OR fixed amount per door/window + base perimeter?
@@ -112,6 +115,7 @@ export function calculatePaintEstimate(
     // 6. Labor Cost Estimation (UK Average £12 - £20 per sqm for prep + 2 coats)
     const laborMin = paintableArea * 12;
     const laborMax = paintableArea * 20;
+    const preciseLaborCost = paintableArea * laborRatePerSqM;
 
     return {
         totalWallArea: grossWallArea,
@@ -130,6 +134,8 @@ export function calculatePaintEstimate(
         estimatedLaborCost: {
             min: laborMin,
             max: laborMax
-        }
+        },
+
+        preciseLaborCost: preciseLaborCost
     };
 }

@@ -29,6 +29,8 @@ export default function Home() {
   const [numDoors, setNumDoors] = useState<number | ''>(1);
   const [numWindows, setNumWindows] = useState<number | ''>(1);
 
+  const [laborRate, setLaborRate] = useState<number>(16); // £/m²
+
   const [result, setResult] = useState<EstimationResult | null>(null);
 
   useEffect(() => {
@@ -64,10 +66,11 @@ export default function Home() {
       numDoors === '' ? 0 : numDoors,
       numWindows === '' ? 0 : numWindows,
       // In Area mode, we disable specific ceiling logic (assumed in total) or force false
-      inputMode === 'dimensions' ? includeCeiling : false
+      inputMode === 'dimensions' ? includeCeiling : false,
+      laborRate
     );
     setResult(res);
-  }, [width, length, height, customWallArea, inputMode, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim]);
+  }, [width, length, height, customWallArea, inputMode, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim, laborRate]);
 
   // Helper for safe number input updates
   const handleDimensionChange = (
@@ -299,33 +302,40 @@ export default function Home() {
 
           {/* Results Panel */}
           {result && (
-            <div className="results-panel">
+            <div style={{ marginTop: '2rem', background: 'var(--surface-2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
               <div className="result-item">
-                <span className="result-label">Net Wall Area</span>
-                <span className="result-value">{Math.round(result.paintableArea)} sq m</span>
+                <span className="result-label">Net Wall Area (Paintable)</span>
+                <span className="result-value">{result.paintableArea.toFixed(1)} m²</span>
               </div>
 
+              <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
+
               <div className="result-item">
-                <span className="result-label">Wall Paint ({result.wallPaint.product.brand})</span>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="result-value">{result.wallPaint.litresNeeded} Litres</div>
-                  <small style={{ color: 'var(--text-muted)' }}>£{result.wallPaint.cost.toFixed(2)}</small>
+                <div>
+                  <span className="result-label">Wall Paint ({coats} coats)</span>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                    {result.wallPaint.litresNeeded} Litres required
+                  </div>
                 </div>
+                <div className="result-value">£{result.wallPaint.cost.toFixed(2)}</div>
               </div>
 
               {result.trimPaint && (
-                <div className="result-item">
-                  <span className="result-label">Trim Paint ({result.trimPaint.product.brand})</span>
-                  <div style={{ textAlign: 'right' }}>
-                    <div className="result-value">{result.trimPaint.litresNeeded} Litres</div>
-                    <small style={{ color: 'var(--text-muted)' }}>£{result.trimPaint.cost.toFixed(2)}</small>
+                <div className="result-item" style={{ marginTop: '1rem' }}>
+                  <div>
+                    <span className="result-label">Trim Paint</span>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      {result.trimPaint.litresNeeded} Litres required
+                    </div>
                   </div>
+                  <div className="result-value">£{result.trimPaint.cost.toFixed(2)}</div>
                 </div>
               )}
 
               <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
-              <div className="result-item">
-                <span className="result-label" style={{ fontWeight: 600 }}>Total Estimated Cost</span>
+
+              <div className="result-item" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                <span>Total Materials Cost</span>
                 <div style={{ textAlign: 'right' }}>
                   <div className="price-highlight">
                     £{result.totalEstimatedCost.toFixed(2)}
@@ -336,13 +346,37 @@ export default function Home() {
               {result.estimatedLaborCost && (
                 <>
                   <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
-                  <div className="result-item">
-                    <span className="result-label" style={{ fontWeight: 600 }}>Professional Labor Estimate</span>
-                    <div style={{ textAlign: 'right' }}>
-                      <div className="result-value" style={{ fontSize: '1rem' }}>
-                        £{Math.round(result.estimatedLaborCost.min)} - £{Math.round(result.estimatedLaborCost.max)}
+                  <div className="result-item" style={{ alignItems: 'flex-start' }}>
+                    <div>
+                      <span className="result-label" style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Professional Labor Estimate</span>
+
+                      {/* Interactive Labor Rate Control */}
+                      <div style={{ background: 'var(--surface-1)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginTop: '0.5rem' }}>
+                        <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                          <span>Adjust Hourly/Area Rate:</span>
+                          <strong>£{laborRate}/m²</strong>
+                        </label>
+                        <input
+                          type="range"
+                          min="10"
+                          max="40"
+                          step="1"
+                          value={laborRate}
+                          onChange={(e) => setLaborRate(Number(e.target.value))}
+                          style={{ width: '100%', cursor: 'pointer' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                          <span>£10 (Budget)</span>
+                          <span>£40 (High-Spec)</span>
+                        </div>
                       </div>
-                      <small style={{ color: 'var(--text-muted)' }}>Based on approx £12-£20/m²</small>
+                    </div>
+
+                    <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                      <div className="result-value" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>
+                        £{Math.round(result.preciseLaborCost)}
+                      </div>
+                      <small style={{ color: 'var(--text-muted)' }}>Typical range: £{Math.round(result.estimatedLaborCost.min)} - £{Math.round(result.estimatedLaborCost.max)}</small>
                     </div>
                   </div>
                 </>

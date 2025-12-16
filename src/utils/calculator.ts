@@ -23,6 +23,11 @@ export interface EstimationResult {
     };
 
     totalEstimatedCost: number;
+
+    estimatedLaborCost: {
+        min: number;
+        max: number;
+    };
 }
 
 const DOOR_DEDUCTION = 2.0; // sq meters
@@ -82,6 +87,10 @@ export function calculatePaintEstimate(
         };
     }
 
+    // 6. Labor Cost Estimation (UK Average £12 - £20 per sqm for prep + 2 coats)
+    const laborMin = paintableArea * 12;
+    const laborMax = paintableArea * 20;
+
     return {
         totalWallArea: grossWallArea,
         paintableArea: paintableArea,
@@ -94,6 +103,11 @@ export function calculatePaintEstimate(
 
         trimPaint: trimResult,
 
-        totalEstimatedCost: wallCost + (trimResult?.cost || 0)
+        totalEstimatedCost: wallCost + (trimResult?.cost || 0),
+
+        estimatedLaborCost: {
+            min: laborMin,
+            max: laborMax
+        }
     };
 }

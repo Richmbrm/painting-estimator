@@ -251,6 +251,21 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+
+              {result.estimatedLaborCost && (
+                <>
+                  <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
+                  <div className="result-item">
+                    <span className="result-label" style={{ fontWeight: 600 }}>Professional Labor Estimate</span>
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="result-value" style={{ fontSize: '1rem' }}>
+                        £{Math.round(result.estimatedLaborCost.min)} - £{Math.round(result.estimatedLaborCost.max)}
+                      </div>
+                      <small style={{ color: 'var(--text-muted)' }}>Based on approx £12-£20/m²</small>
+                    </div>
+                  </div>
+                </>
+              )}
               <p className="disclaimer">*Estimate based on mock supplier prices. Actual in-store prices may vary.</p>
             </div>
           )}

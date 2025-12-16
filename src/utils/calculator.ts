@@ -86,7 +86,7 @@ export function calculatePaintEstimate(
     const wallCost = wallLitres * wallProduct.pricePerLitre;
 
     // 5. Trim Paint Calc (Optional)
-    let trimResult: EstimationResult['trimPaint'] = null;
+    let trimResult: EstimationResult['trimPaint'];
     if (trimProduct) {
         // Rough approximation for trim: 10% of wall area is usually a safe bet for skirting/frames in a standard room
         // OR fixed amount per door/window + base perimeter?

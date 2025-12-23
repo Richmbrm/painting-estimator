@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    output: 'export',  // Enable static export for GitHub Pages
-    images: {
-        unoptimized: true, // Required for static export
-    },
+    // output: 'export',  // Disabled to allow API Routes
+    // images: {
+    //     unoptimized: true,
+    // },
     // Force a new build to sync GitHub Actions
     trailingSlash: true,
 };

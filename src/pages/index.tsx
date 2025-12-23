@@ -31,8 +31,12 @@ export default function Home() {
   const [numWindows, setNumWindows] = useState<number | ''>(1);
 
   const [laborRate, setLaborRate] = useState<number>(16); // £/m²
-
   const [result, setResult] = useState<EstimationResult | null>(null);
+
+  // Price Search State
+  const [isSearching, setIsSearching] = useState(false);
+  const [priceResults, setPriceResults] = useState<any[]>([]);
+  const [showPriceModal, setShowPriceModal] = useState(false);
 
   useEffect(() => {
     const wallProduct = getProductById(wallProductId);
@@ -107,6 +111,40 @@ export default function Home() {
     amount: number
   ) => {
     setter(Math.max(0, current + amount));
+  };
+
+  const handleSearchPrices = async () => {
+    // Determine search query based on selected product
+    const wallProduct = getProductById(wallProductId);
+    if (!wallProduct) return;
+
+    const query = `${wallProduct.brand} ${wallProduct.name} paint`;
+    setIsSearching(true);
+    setPriceResults([]);
+    setShowPriceModal(true);
+
+    try {
+      const res = await fetch(`/api/search-prices?query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.results) {
+        setPriceResults(data.results);
+      }
+    } catch (err) {
+      console.error("Failed to fetch prices", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const selectPrice = (priceStr: string) => {
+    // Extract number from string like "£42.00"
+    const cost = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+    if (!isNaN(cost) && result) {
+      // Note: This is a visual override for the user. In a real app we'd update the context/product data.
+      // For this estimator, we'll just allow them to see the comparison for now.
+      alert(`Selected price: £${cost}. (Note: To use this exact price in calculation, further backend updates are needed. Keeping original estimate for now.)`);
+    }
+    setShowPriceModal(false);
   };
 
   return (
@@ -350,8 +388,55 @@ export default function Home() {
                   <div className="price-highlight">
                     £{result.totalEstimatedCost.toFixed(2)}
                   </div>
+                  <button
+                    onClick={handleSearchPrices}
+                    style={{
+                      fontSize: '0.8rem',
+                      marginTop: '0.5rem',
+                      background: 'var(--primary)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔍 Find Real Prices
+                  </button>
                 </div>
               </div>
+
+              {/* Price Search Modal (Inline) */}
+              {showPriceModal && (
+                <div style={{ marginTop: '1rem', background: '#333', padding: '1rem', borderRadius: '8px', border: '1px solid #555' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0 }}>Current Online Prices</h4>
+                    <button onClick={() => setShowPriceModal(false)} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }}>✕</button>
+                  </div>
+
+                  {isSearching ? (
+                    <div style={{ textAlign: 'center', padding: '1rem' }}>Searching...</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {priceResults.length === 0 ? (
+                        <div>No results found.</div>
+                      ) : (
+                        priceResults.map((item, idx) => (
+                          <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', background: '#222', padding: '8px', borderRadius: '4px' }}>
+                            {item.thumbnail && <img src={item.thumbnail} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{item.title}</div>
+                              <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{item.source}</div>
+                            </div>
+                            <div style={{ fontWeight: 'bold', color: '#4caf50' }}>{item.price}</div>
+                          </div>
+                        ))
+                      )}
+                      {priceResults.length > 0 && <small style={{ display: 'block', textAlign: 'center', color: '#777', marginTop: '5px' }}>Prices provided by SerpApi</small>}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {result.estimatedLaborCost && (
                 <>

@@ -408,31 +408,78 @@ export default function Home() {
 
               {/* Price Search Modal (Inline) */}
               {showPriceModal && (
-                <div style={{ marginTop: '1rem', background: '#333', padding: '1rem', borderRadius: '8px', border: '1px solid #555' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <h4 style={{ margin: 0 }}>Current Online Prices</h4>
-                    <button onClick={() => setShowPriceModal(false)} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }}>✕</button>
+                <div style={{
+                  marginTop: '1rem',
+                  background: 'white',
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--primary-light)',
+                  boxShadow: 'var(--shadow-sm)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-main)' }}>Current Online Prices</h4>
+                    <button
+                      onClick={() => setShowPriceModal(false)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        fontSize: '1.2rem',
+                        lineHeight: 1,
+                        padding: '0 4px'
+                      }}
+                      aria-label="Close"
+                    >
+                      ✕
+                    </button>
                   </div>
 
                   {isSearching ? (
-                    <div style={{ textAlign: 'center', padding: '1rem' }}>Searching...</div>
+                    <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
+                      <span style={{ display: 'inline-block', animation: 'pulse 1s infinite' }}>🔍</span> Searching...
+                    </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {priceResults.length === 0 ? (
-                        <div>No results found.</div>
+                        <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No results found via Google Shopping.</div>
                       ) : (
                         priceResults.map((item, idx) => (
-                          <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', background: '#222', padding: '8px', borderRadius: '4px' }}>
-                            {item.thumbnail && <img src={item.thumbnail} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />}
+                          <div key={idx} style={{
+                            display: 'flex',
+                            gap: '12px',
+                            alignItems: 'center',
+                            background: 'var(--surface-1)',
+                            padding: '10px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid rgba(0,0,0,0.03)'
+                          }}>
+                            {item.thumbnail ? (
+                              <img src={item.thumbnail} alt="" style={{ width: '48px', height: '48px', objectFit: 'contain', background: 'white', borderRadius: '4px', padding: '2px' }} />
+                            ) : (
+                              <div style={{ width: '48px', height: '48px', background: '#eee', borderRadius: '4px' }}></div>
+                            )}
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{item.title}</div>
-                              <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{item.source}</div>
+                              <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', lineHeight: '1.2' }}>{item.title}</div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{item.source}</div>
                             </div>
-                            <div style={{ fontWeight: 'bold', color: '#4caf50' }}>{item.price}</div>
+                            <div style={{ fontWeight: '700', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>{item.price}</div>
                           </div>
                         ))
                       )}
-                      {priceResults.length > 0 && <small style={{ display: 'block', textAlign: 'center', color: '#777', marginTop: '5px' }}>Prices provided by SerpApi</small>}
+                      {priceResults.length > 0 && (
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          marginTop: '0.5rem',
+                          borderTop: '1px solid rgba(0,0,0,0.05)',
+                          paddingTop: '0.5rem'
+                        }}>
+                          <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                            Prices provided by SerpApi
+                          </small>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

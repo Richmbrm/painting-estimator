@@ -445,15 +445,32 @@ export default function Home() {
                         <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No results found via Google Shopping.</div>
                       ) : (
                         priceResults.map((item, idx) => (
-                          <div key={idx} style={{
-                            display: 'flex',
-                            gap: '12px',
-                            alignItems: 'center',
-                            background: 'var(--surface-1)',
-                            padding: '10px',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid rgba(0,0,0,0.03)'
-                          }}>
+                          <a
+                            key={idx}
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'flex',
+                              gap: '12px',
+                              alignItems: 'center',
+                              background: 'var(--surface-1)',
+                              padding: '10px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: '1px solid rgba(0,0,0,0.03)',
+                              textDecoration: 'none', // Remove underline
+                              color: 'inherit', // Inherit text color
+                              transition: 'transform 0.1s ease, background 0.1s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'var(--surface-2)';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'var(--surface-1)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
                             {item.thumbnail ? (
                               <img src={item.thumbnail} alt="" style={{ width: '48px', height: '48px', objectFit: 'contain', background: 'white', borderRadius: '4px', padding: '2px' }} />
                             ) : (
@@ -461,10 +478,10 @@ export default function Home() {
                             )}
                             <div style={{ flex: 1 }}>
                               <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', lineHeight: '1.2' }}>{item.title}</div>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{item.source}</div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{item.source} ↗</div>
                             </div>
                             <div style={{ fontWeight: '700', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>{item.price}</div>
-                          </div>
+                          </a>
                         ))
                       )}
                       {priceResults.length > 0 && (

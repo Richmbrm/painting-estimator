@@ -77,11 +77,11 @@ export default async function handler(
 
         const shoppingResults = data.shopping_results || [];
 
-        const results: PriceResult[] = shoppingResults.map((item: any) => ({
+        const results: PriceResult[] = shoppingResults.slice(0, 10).map((item: any) => ({
             title: item.title,
             price: item.price,
             source: item.source,
-            link: item.link,
+            link: item.product_link || item.link, // Fix: SerpApi often uses product_link
             thumbnail: item.thumbnail
         }));
 

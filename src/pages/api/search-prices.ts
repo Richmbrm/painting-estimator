@@ -36,7 +36,7 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    const { query } = req.query;
+    const { query, location } = req.query;
 
     if (!query || typeof query !== 'string') {
         return res.status(400).json({ error: 'Query parameter is required' });
@@ -61,8 +61,12 @@ export default async function handler(
             gl: "uk",
             hl: "en",
             api_key: apiKey,
-            num: "5" // Limit results
+            num: "10" // Limit results
         });
+
+        if (location && typeof location === 'string') {
+            params.append('location', location);
+        }
 
         const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
         const data = await response.json();

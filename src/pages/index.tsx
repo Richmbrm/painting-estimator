@@ -37,6 +37,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [priceResults, setPriceResults] = useState<any[]>([]);
   const [showPriceModal, setShowPriceModal] = useState(false);
+  const [locationInput, setLocationInput] = useState('');
 
   useEffect(() => {
     const wallProduct = getProductById(wallProductId);
@@ -113,10 +114,13 @@ export default function Home() {
     setter(Math.max(0, current + amount));
   };
 
-  const handleSearchPrices = async () => {
+  const handleSearchPrices = async (manualLocation?: string) => {
     // Determine search query based on selected product
     const wallProduct = getProductById(wallProductId);
     if (!wallProduct) return;
+
+    // Use manual location if provided (from "Update" button), otherwise use state
+    const loc = manualLocation !== undefined ? manualLocation : locationInput;
 
     const query = `${wallProduct.brand} ${wallProduct.name} paint`;
     setIsSearching(true);
@@ -124,7 +128,12 @@ export default function Home() {
     setShowPriceModal(true);
 
     try {
-      const res = await fetch(`/api/search-prices?query=${encodeURIComponent(query)}`);
+      let url = `/api/search-prices?query=${encodeURIComponent(query)}`;
+      if (loc.trim()) {
+        url += `&location=${encodeURIComponent(loc.trim())}`;
+      }
+
+      const res = await fetch(url);
       const data = await res.json();
       if (data.results) {
         setPriceResults(data.results);
@@ -389,7 +398,7 @@ export default function Home() {
                     £{result.totalEstimatedCost.toFixed(2)}
                   </div>
                   <button
-                    onClick={handleSearchPrices}
+                    onClick={() => handleSearchPrices()}
                     style={{
                       fontSize: '0.8rem',
                       marginTop: '0.5rem',
@@ -432,6 +441,42 @@ export default function Home() {
                       aria-label="Close"
                     >
                       ✕
+                    </button>
+                  </div>
+
+                  {/* Location Input */}
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <input
+                      type="text"
+                      placeholder="Postcode or City (e.g. London)"
+                      value={locationInput}
+                      onChange={(e) => setLocationInput(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd',
+                        fontSize: '0.9rem'
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearchPrices(locationInput);
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => handleSearchPrices(locationInput)}
+                      style={{
+                        background: 'var(--primary)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '0 12px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      Update
                     </button>
                   </div>
 

@@ -550,7 +550,7 @@ export default function Home() {
               {result.estimatedLaborCost && (
                 <>
                   <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
-                  <div className="result-item" style={{ alignItems: 'flex-start' }}>
+                  <div className="result-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                     <div>
                       <span className="result-label" style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Professional Labor Estimate</span>
 
@@ -575,7 +575,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                    <div style={{ textAlign: 'left', marginTop: '1rem', borderTop: '1px solid var(--surface-1)', paddingTop: '1rem' }}>
                       <div className="result-value" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>
                         £{Math.round(result.preciseLaborCost)}
                       </div>

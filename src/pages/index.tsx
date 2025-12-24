@@ -584,7 +584,7 @@ export default function Home() {
                   </div>
                 </>
               )}
-              <p className="disclaimer">*Estimate based on mock supplier prices. Actual in-store prices may vary.</p>
+              <p className="disclaimer">*Prices are feed via test API, actual prices may vary.</p>
             </div>
           )}
 

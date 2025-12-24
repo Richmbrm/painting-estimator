@@ -77,13 +77,19 @@ export default async function handler(
 
         const shoppingResults = data.shopping_results || [];
 
-        const results: PriceResult[] = shoppingResults.slice(0, 10).map((item: any) => ({
-            title: item.title,
-            price: item.price,
-            source: item.source,
-            link: item.product_link || item.link, // Fix: SerpApi often uses product_link
-            thumbnail: item.thumbnail
-        }));
+        const results: PriceResult[] = shoppingResults.slice(0, 10).map((item: any) => {
+            // Fix: SerpApi URLs can contain pipes '|' which cause 400 errors if not encoded
+            const rawLink = item.product_link || item.link || '#';
+            const cleanLink = rawLink.replace(/\|/g, '%7C');
+
+            return {
+                title: item.title,
+                price: item.price,
+                source: item.source,
+                link: cleanLink,
+                thumbnail: item.thumbnail
+            };
+        });
 
         return res.status(200).json({ results, isMock: false });
 

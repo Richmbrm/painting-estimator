@@ -159,7 +159,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Paint Cost Estimator (UK)</title>
+        <title>OPC Painting Estimator</title>
         <meta name="description" content="Calculate paint material costs for your room" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -167,7 +167,7 @@ export default function Home() {
 
       <main>
         <header className="header-hero">
-          <h1>Paint Material Estimator</h1>
+          <h1>OPC Painting Estimator</h1>
           <p>Get a quick estimate for your DIY painting project (UK Standards)</p>
         </header>
 

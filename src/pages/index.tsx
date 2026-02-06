@@ -13,9 +13,9 @@ export default function Home() {
   const [inputMode, setInputMode] = useState<'dimensions' | 'area'>('dimensions');
   const [customWallArea, setCustomWallArea] = useState<number | ''>('');
 
-  const [width, setWidth] = useState<number | ''>(4); // meters (approx 13ft)
-  const [length, setLength] = useState<number | ''>(6); // meters (approx 20ft)
-  const [height, setHeight] = useState<number | ''>(2.4); // meters (approx 8ft)
+  const [width, setWidth] = useState<number | ''>(0);
+  const [length, setLength] = useState<number | ''>(0);
+  const [height, setHeight] = useState<number | ''>(0);
 
   // Default selections
   const [wallProductId, setWallProductId] = useState<string>(wallProducts[0].id);

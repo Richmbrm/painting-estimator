@@ -3,7 +3,6 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { calculatePaintEstimate, EstimationResult } from '../utils/calculator';
 import { SUPPLIER_DATA, PaintProduct, getProductById } from '../utils/supplier_data';
-import { WINTER_TRENDS } from '../utils/trends';
 
 export default function Home() {
   // Filter products for dropdowns
@@ -590,28 +589,6 @@ export default function Home() {
 
         </div>
 
-        {/* Seasonal Trends Section */}
-        <section className="trends-section">
-          <header className="trends-header">
-            <span>❄️</span>
-            <h2>Trending This Season (Winter 2025/2026)</h2>
-          </header>
-
-          <div className="trends-grid">
-            {WINTER_TRENDS.map(trend => (
-              <div key={trend.id} className="trend-card">
-                <div
-                  className="color-swatch"
-                  style={{ backgroundColor: trend.hex }}
-                  title={trend.hex}
-                ></div>
-                <div className="trend-name">{trend.name}</div>
-                <div className="trend-brand">{trend.brand}</div>
-                <div className="trend-desc">{trend.description}</div>
-              </div>
-            ))}
-          </div>
-        </section>
 
       </main>
     </>

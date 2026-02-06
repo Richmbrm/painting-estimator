@@ -168,7 +168,7 @@ export default function Home() {
       <main>
         <header className="header-hero">
           <h1>OPC Painting Estimator</h1>
-          <p>Get a quick estimate for your DIY painting project (UK Standards)</p>
+          <p>You are viewing an app developed by Oakland Park Contracts. Quotations are a rough guide for your project.(UK Standards)</p>
         </header>
 
         <div className="card">

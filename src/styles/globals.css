@@ -48,7 +48,7 @@ main {
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1.5rem 0.75rem;
 }
 
 h1,
@@ -73,7 +73,7 @@ h1 {
   background: var(--surface-2);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  padding: 2rem;
+  padding: 1.5rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(10px);
 }
@@ -92,19 +92,20 @@ h1 {
 
 .input-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
 input[type="number"],
 select {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   border-radius: var(--radius-sm);
   border: 1px solid hsl(220, 20%, 90%);
   background: var(--surface-1);
   font-size: 1rem;
   transition: all 0.2s ease;
+  text-overflow: ellipsis;
 }
 
 input[type="number"]:focus,
@@ -408,6 +409,48 @@ input[type=range] {
   width: 100%;
   cursor: pointer;
   accent-color: var(--primary);
+}
+
+@media (max-width: 480px) {
+  main {
+    padding: 1rem 0.5rem;
+  }
+
+  .card {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-group {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checkbox-visual {
+    font-size: 0.9rem;
+  }
+
+  .toggle-group {
+    width: 100%;
+    border-radius: var(--radius-sm);
+  }
+
+  .btn-toggle {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  .header-hero p {
+    font-size: 0.95rem;
+  }
 }
 
 .deductions-note {

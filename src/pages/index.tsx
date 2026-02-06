@@ -551,12 +551,15 @@ export default function Home() {
                   <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
                   <div className="result-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                     <div>
-                      <span className="result-label" style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Professional Labor Estimate</span>
+                      <span className="result-label" style={{ fontWeight: 600, display: 'block' }}>Labour effort required</span>
+                      <small style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>
+                        Less prep less cost, more prep more cost
+                      </small>
 
                       {/* Interactive Labor Rate Control */}
                       <div className="labor-control-panel">
                         <label className="labor-header">
-                          <span>Adjust Hourly/Area Rate:</span>
+                          <span>Adjust Preparation Effort:</span>
                           <strong>£{laborRate}/m²</strong>
                         </label>
                         <input
@@ -568,8 +571,8 @@ export default function Home() {
                           onChange={(e) => setLaborRate(Number(e.target.value))}
                         />
                         <div className="range-labels">
-                          <span>£10 (Budget)</span>
-                          <span>£40 (High-Spec)</span>
+                          <span>£10 (Min Preparation)</span>
+                          <span>£40 (Extensive Prep)</span>
                         </div>
                       </div>
                     </div>

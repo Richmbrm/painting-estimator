@@ -4,81 +4,139 @@ import { useState, useEffect } from 'react';
 import { calculatePaintEstimate, EstimationResult } from '../utils/calculator';
 import { SUPPLIER_DATA, PaintProduct, getProductById } from '../utils/supplier_data';
 
+interface Room {
+  id: string;
+  name: string;
+  type: string;
+  inputMode: 'dimensions' | 'area';
+  customWallArea: number | '';
+  width: number | '';
+  length: number | '';
+  height: number | '';
+  wallProductId: string;
+  trimProductId: string;
+  coats: number;
+  includeCeiling: boolean;
+  includeTrim: boolean;
+  includePrimer: boolean;
+  numDoors: number | '';
+  numWindows: number | '';
+  laborRate: number;
+  result: EstimationResult | null;
+}
+
+const ROOM_TYPES = [
+  { id: 'kitchen', label: 'Kitchen', icon: '🍳' },
+  { id: 'bedroom', label: 'Bedroom', icon: '🛏️' },
+  { id: 'living', label: 'Living Room', icon: '🛋️' },
+  { id: 'dining', label: 'Dining Room', icon: '🍽️' },
+  { id: 'bathroom', label: 'Bathroom', icon: '🛁' },
+  { id: 'hallway', label: 'Hallway', icon: '🚪' },
+  { id: 'other', label: 'Other', icon: '🏠' },
+];
+
 export default function Home() {
-  // Filter products for dropdowns
   const wallProducts = SUPPLIER_DATA.filter(p => p.type === 'wall');
   const trimProducts = SUPPLIER_DATA.filter(p => p.type === 'trim');
 
-  // Input Mode state
-  const [inputMode, setInputMode] = useState<'dimensions' | 'area'>('dimensions');
-  const [customWallArea, setCustomWallArea] = useState<number | ''>('');
+  // Multi-room state
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'dashboard' | 'room-picker' | 'editor'>('dashboard');
 
-  const [width, setWidth] = useState<number | ''>(0);
-  const [length, setLength] = useState<number | ''>(0);
-  const [height, setHeight] = useState<number | ''>(0);
+  const activeRoom = rooms.find(r => r.id === activeRoomId) || null;
 
-  // Default selections
-  const [wallProductId, setWallProductId] = useState<string>(wallProducts[0].id);
-  const [trimProductId, setTrimProductId] = useState<string>(trimProducts[0].id);
-
-  const [coats, setCoats] = useState<number>(2);
-  const [includeCeiling, setIncludeCeiling] = useState<boolean>(true);
-  const [includeTrim, setIncludeTrim] = useState<boolean>(true);
-  const [includePrimer, setIncludePrimer] = useState<boolean>(false);
-
-  const [numDoors, setNumDoors] = useState<number | ''>(1);
-  const [numWindows, setNumWindows] = useState<number | ''>(1);
-
-  const [laborRate, setLaborRate] = useState<number>(16); // £/m²
-  const [result, setResult] = useState<EstimationResult | null>(null);
-
-  // Price Search State
+  // Price Search State (Global for simplicity, or could be per room)
   const [isSearching, setIsSearching] = useState(false);
   const [priceResults, setPriceResults] = useState<any[]>([]);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [locationInput, setLocationInput] = useState('');
 
   useEffect(() => {
-    const wallProduct = getProductById(wallProductId);
-    const trimProduct = includeTrim ? getProductById(trimProductId) : null;
-    const primerProduct = includePrimer ? getProductById('trim_primer') : null;
+    if (!activeRoom) return;
 
-    if (!wallProduct) return; // Should not happen with defaults
+    const wallProduct = getProductById(activeRoom.wallProductId);
+    const trimProduct = activeRoom.includeTrim ? getProductById(activeRoom.trimProductId) : null;
+    const primerProduct = activeRoom.includePrimer ? getProductById('trim_primer') : null;
 
-    // Calculation Logic Selection
-    let dimensions: { width: number; length: number; height: number } | { totalWallArea: number } | null = null;
+    if (!wallProduct) return;
 
-    if (inputMode === 'dimensions') {
-      // Safety check: ensure all dimensions are valid numbers
-      if (width === '' || length === '' || height === '') {
-        return;
-      }
-      dimensions = { width: Number(width), length: Number(length), height: Number(height) };
+    let dimensions: any = null;
+    if (activeRoom.inputMode === 'dimensions') {
+      if (activeRoom.width === '' || activeRoom.length === '' || activeRoom.height === '') return;
+      dimensions = { width: Number(activeRoom.width), length: Number(activeRoom.length), height: Number(activeRoom.height) };
     } else {
-      // Area mode
-      if (customWallArea === '') {
-        return;
-      }
-      dimensions = { totalWallArea: Number(customWallArea) };
+      if (activeRoom.customWallArea === '') return;
+      dimensions = { totalWallArea: Number(activeRoom.customWallArea) };
     }
-
-    if (!dimensions) return;
 
     const res = calculatePaintEstimate(
       dimensions,
       wallProduct,
       trimProduct || null,
-      coats,
-      numDoors === '' ? 0 : numDoors,
-      numWindows === '' ? 0 : numWindows,
-      // In Area mode, we disable specific ceiling logic (assumed in total) or force false
-      inputMode === 'dimensions' ? includeCeiling : false,
-      laborRate,
-      includePrimer,
+      activeRoom.coats,
+      activeRoom.numDoors === '' ? 0 : activeRoom.numDoors,
+      activeRoom.numWindows === '' ? 0 : activeRoom.numWindows,
+      activeRoom.inputMode === 'dimensions' ? activeRoom.includeCeiling : false,
+      activeRoom.laborRate,
+      activeRoom.includePrimer,
       primerProduct || null
     );
-    setResult(res);
-  }, [width, length, height, customWallArea, inputMode, wallProductId, trimProductId, coats, numDoors, numWindows, includeCeiling, includeTrim, laborRate, includePrimer]);
+
+    setRooms(prev => prev.map(r => r.id === activeRoom.id ? { ...r, result: res } : r));
+  }, [
+    activeRoom?.width,
+    activeRoom?.length,
+    activeRoom?.height,
+    activeRoom?.customWallArea,
+    activeRoom?.inputMode,
+    activeRoom?.wallProductId,
+    activeRoom?.trimProductId,
+    activeRoom?.coats,
+    activeRoom?.numDoors,
+    activeRoom?.numWindows,
+    activeRoom?.includeCeiling,
+    activeRoom?.includeTrim,
+    activeRoom?.laborRate,
+    activeRoom?.includePrimer
+  ]);
+
+  const updateActiveRoom = (updates: Partial<Room>) => {
+    if (!activeRoomId) return;
+    setRooms(prev => prev.map(r => r.id === activeRoomId ? { ...r, ...updates } : r));
+  };
+
+  const addRoom = (typeId: string) => {
+    const type = ROOM_TYPES.find(t => t.id === typeId);
+    const newRoom: Room = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: type?.label || 'New Room',
+      type: typeId,
+      inputMode: 'dimensions',
+      customWallArea: '',
+      width: 0,
+      length: 0,
+      height: 0,
+      wallProductId: wallProducts[0].id,
+      trimProductId: trimProducts[0].id,
+      coats: 2,
+      includeCeiling: true,
+      includeTrim: true,
+      includePrimer: false,
+      numDoors: 1,
+      numWindows: 1,
+      laborRate: 16,
+      result: null,
+    };
+    setRooms(prev => [...prev, newRoom]);
+    setActiveRoomId(newRoom.id);
+    setViewMode('editor');
+  };
+
+  const deleteRoom = (id: string) => {
+    setRooms(prev => prev.filter(r => r.id !== id));
+    if (activeRoomId === id) setActiveRoomId(null);
+  };
 
   // Helper for safe number input updates
   const handleDimensionChange = (
@@ -114,8 +172,8 @@ export default function Home() {
   };
 
   const handleSearchPrices = async (manualLocation?: string) => {
-    // Determine search query based on selected product
-    const wallProduct = getProductById(wallProductId);
+    if (!activeRoom) return;
+    const wallProduct = getProductById(activeRoom.wallProductId);
     if (!wallProduct) return;
 
     // Use manual location if provided (from "Update" button), otherwise use state
@@ -145,15 +203,80 @@ export default function Home() {
   };
 
   const selectPrice = (priceStr: string) => {
-    // Extract number from string like "£42.00"
     const cost = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
-    if (!isNaN(cost) && result) {
-      // Note: This is a visual override for the user. In a real app we'd update the context/product data.
-      // For this estimator, we'll just allow them to see the comparison for now.
+    if (!isNaN(cost) && activeRoom?.result) {
       alert(`Selected price: £${cost}. (Note: To use this exact price in calculation, further backend updates are needed. Keeping original estimate for now.)`);
     }
     setShowPriceModal(false);
   };
+
+  if (viewMode === 'dashboard') {
+    const totalMaterials = rooms.reduce((sum, r) => sum + (r.result?.totalEstimatedCost || 0), 0);
+    const totalLabor = rooms.reduce((sum, r) => sum + (r.result?.preciseLaborCost || 0), 0);
+    const grandTotal = totalMaterials + totalLabor;
+
+    return (
+      <main>
+        <header className="header-hero">
+          <h1>OPC Painting Estimator</h1>
+          <p>Project Dashboard - Manage your room estimates</p>
+        </header>
+
+        <div className="dashboard-summary">
+          <div className="summary-card">
+            <div className="label">Project Total</div>
+            <div className="value price-highlight">£{grandTotal.toFixed(2)}</div>
+          </div>
+          <div className="summary-details">
+            <div>Materials: £{totalMaterials.toFixed(2)}</div>
+            <div>Labour: £{totalLabor.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div className="room-grid">
+          {rooms.map(room => (
+            <div key={room.id} className="room-card" onClick={() => { setActiveRoomId(room.id); setViewMode('editor'); }}>
+              <div className="room-icon">{ROOM_TYPES.find(t => t.id === room.type)?.icon}</div>
+              <div className="room-info">
+                <h3>{room.name}</h3>
+                <div className="room-price">£{((room.result?.totalEstimatedCost || 0) + (room.result?.preciseLaborCost || 0)).toFixed(2)}</div>
+              </div>
+              <button className="btn-delete" onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}>✕</button>
+            </div>
+          ))}
+          <button className="btn-add-room" onClick={() => setViewMode('room-picker')}>
+            <span>+</span>
+            <div>Add Room</div>
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (viewMode === 'room-picker') {
+    return (
+      <main>
+        <header className="header-hero">
+          <button className="btn-back" onClick={() => setViewMode('dashboard')}>← Back to Dashboard</button>
+          <h1>Select Room Type</h1>
+          <p>What room are you estimating?</p>
+        </header>
+        <div className="room-type-grid">
+          {ROOM_TYPES.map(type => (
+            <button key={type.id} className="type-card" onClick={() => addRoom(type.id)}>
+              <span className="type-icon">{type.icon}</span>
+              <span className="type-label">{type.label}</span>
+            </button>
+          ))}
+        </div>
+      </main>
+    );
+  }
+
+  if (!activeRoom) {
+    setViewMode('dashboard');
+    return null;
+  }
 
   return (
     <>
@@ -163,26 +286,24 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
       <main>
         <header className="header-hero">
-          <h1>OPC Painting Estimator</h1>
-          <p>You are viewing an app developed by Oakland Park Contracts. Quotations are a rough guide for your project.(UK Standards)</p>
+          <button className="btn-back" onClick={() => setViewMode('dashboard')}>← Back to Dashboard</button>
+          <h1>{activeRoom.name} Estimate</h1>
+          <p>Adjust dimensions and materials for this room.</p>
         </header>
 
         <div className="card">
-          {/* Mode Toggle */}
-          {/* Mode Toggle */}
           <div className="toggle-group">
             <button
-              onClick={() => setInputMode('dimensions')}
-              className={`btn-toggle ${inputMode === 'dimensions' ? 'active' : ''}`}
+              onClick={() => updateActiveRoom({ inputMode: 'dimensions' })}
+              className={`btn-toggle ${activeRoom.inputMode === 'dimensions' ? 'active' : ''}`}
             >
               By Dimensions
             </button>
             <button
-              onClick={() => setInputMode('area')}
-              className={`btn-toggle ${inputMode === 'area' ? 'active' : ''}`}
+              onClick={() => updateActiveRoom({ inputMode: 'area' })}
+              className={`btn-toggle ${activeRoom.inputMode === 'area' ? 'active' : ''}`}
             >
               By Total Area
             </button>
@@ -190,18 +311,18 @@ export default function Home() {
 
           <div className="input-group">
             <label>
-              {inputMode === 'dimensions' ? 'Room Dimensions (Meters)' : 'Total Wall Area (sq meters)'}
+              {activeRoom.inputMode === 'dimensions' ? 'Room Dimensions (Meters)' : 'Total Wall Area (sq meters)'}
             </label>
 
-            {inputMode === 'dimensions' ? (
+            {activeRoom.inputMode === 'dimensions' ? (
               <div className="input-row">
                 <div className="dimension-field">
                   <span className="field-label">Length</span>
                   <input
                     type="number"
                     placeholder="0.0"
-                    value={length}
-                    onChange={(e) => handleDimensionChange(setLength, e.target.value)}
+                    value={activeRoom.length}
+                    onChange={(e) => updateActiveRoom({ length: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                     min="0"
                     step="0.1"
                   />
@@ -211,8 +332,8 @@ export default function Home() {
                   <input
                     type="number"
                     placeholder="0.0"
-                    value={width}
-                    onChange={(e) => handleDimensionChange(setWidth, e.target.value)}
+                    value={activeRoom.width}
+                    onChange={(e) => updateActiveRoom({ width: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                     min="0"
                     step="0.1"
                   />
@@ -222,8 +343,8 @@ export default function Home() {
                   <input
                     type="number"
                     placeholder="0.0"
-                    value={height}
-                    onChange={(e) => handleDimensionChange(setHeight, e.target.value)}
+                    value={activeRoom.height}
+                    onChange={(e) => updateActiveRoom({ height: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                     min="0"
                     step="0.1"
                   />
@@ -236,8 +357,8 @@ export default function Home() {
                   <input
                     type="number"
                     placeholder="e.g. 40"
-                    value={customWallArea}
-                    onChange={(e) => handleDimensionChange(setCustomWallArea, e.target.value)}
+                    value={activeRoom.customWallArea}
+                    onChange={(e) => updateActiveRoom({ customWallArea: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                     min="0"
                     style={{ fontSize: '1.2rem', padding: '1rem' }}
                   />
@@ -249,7 +370,7 @@ export default function Home() {
           <div className="input-row">
             <div className="input-group">
               <label>Wall Paint</label>
-              <select value={wallProductId} onChange={(e) => setWallProductId(e.target.value)}>
+              <select value={activeRoom.wallProductId} onChange={(e) => updateActiveRoom({ wallProductId: e.target.value })}>
                 {wallProducts.map(p => (
                   <option key={p.id} value={p.id}>
                     {p.brand} - {p.name} (£{p.pricePerLitre.toFixed(2)}/L)
@@ -260,7 +381,7 @@ export default function Home() {
 
             <div className="input-group">
               <label>Number of Coats</label>
-              <select value={coats} onChange={(e) => setCoats(Number(e.target.value))}>
+              <select value={activeRoom.coats} onChange={(e) => updateActiveRoom({ coats: Number(e.target.value) })}>
                 <option value="1">1 Coat</option>
                 <option value="2">2 Coats (Recommended)</option>
                 <option value="3">3 Coats</option>
@@ -269,12 +390,12 @@ export default function Home() {
           </div>
 
           <div className="checkbox-group">
-            {inputMode === 'dimensions' && (
+            {activeRoom.inputMode === 'dimensions' && (
               <label className="checkbox-visual">
                 <input
                   type="checkbox"
-                  checked={includeCeiling}
-                  onChange={(e) => setIncludeCeiling(e.target.checked)}
+                  checked={activeRoom.includeCeiling}
+                  onChange={(e) => updateActiveRoom({ includeCeiling: e.target.checked })}
                 />
                 Include Ceiling (Same as Wall)
               </label>
@@ -282,28 +403,28 @@ export default function Home() {
             <label className="checkbox-visual">
               <input
                 type="checkbox"
-                checked={includeTrim}
-                onChange={(e) => setIncludeTrim(e.target.checked)}
+                checked={activeRoom.includeTrim}
+                onChange={(e) => updateActiveRoom({ includeTrim: e.target.checked })}
               />
               Include Trim/Baseboards
             </label>
 
-            {includeTrim && (
+            {activeRoom.includeTrim && (
               <label className="checkbox-visual" style={{ marginLeft: '1.5rem', fontSize: '0.9rem' }}>
                 <input
                   type="checkbox"
-                  checked={includePrimer}
-                  onChange={(e) => setIncludePrimer(e.target.checked)}
+                  checked={activeRoom.includePrimer}
+                  onChange={(e) => updateActiveRoom({ includePrimer: e.target.checked })}
                 />
                 Include Primer/Undercoat
               </label>
             )}
           </div>
 
-          {includeTrim && (
+          {activeRoom.includeTrim && (
             <div className="input-group" style={{ marginTop: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
               <label>Trim Paint</label>
-              <select value={trimProductId} onChange={(e) => setTrimProductId(e.target.value)}>
+              <select value={activeRoom.trimProductId} onChange={(e) => updateActiveRoom({ trimProductId: e.target.value })}>
                 {trimProducts.map(p => (
                   <option key={p.id} value={p.id}>
                     {p.brand} - {p.name} (£{p.pricePerLitre.toFixed(2)}/L)
@@ -320,9 +441,9 @@ export default function Home() {
                 <span className="field-label">Doors (approx 2m²)</span>
                 <input
                   type="number"
-                  value={numDoors}
+                  value={activeRoom.numDoors}
                   placeholder="0"
-                  onChange={(e) => handleDimensionChange(setNumDoors, e.target.value)}
+                  onChange={(e) => updateActiveRoom({ numDoors: e.target.value === '' ? '' : parseInt(e.target.value) })}
                   min="0"
                 />
               </div>
@@ -330,61 +451,60 @@ export default function Home() {
                 <span className="field-label">Windows (approx 1.5m²)</span>
                 <input
                   type="number"
-                  value={numWindows}
+                  value={activeRoom.numWindows}
                   placeholder="0"
-                  onChange={(e) => handleDimensionChange(setNumWindows, e.target.value)}
+                  onChange={(e) => updateActiveRoom({ numWindows: e.target.value === '' ? '' : parseInt(e.target.value) })}
                   min="0"
                 />
               </div>
             </div>
-            {inputMode === 'area' && (
+            {activeRoom.inputMode === 'area' && (
               <small className="deductions-note">
                 * Deductions are subtracted from your total area input above.
               </small>
             )}
           </div>
 
-          {/* Results Panel */}
-          {result && (
+          {activeRoom.result && (
             <div style={{ marginTop: '2rem', background: 'var(--surface-2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
               <div className="result-item">
                 <span className="result-label">Net Wall Area (Paintable)</span>
-                <span className="result-value">{result.paintableArea.toFixed(1)} m²</span>
+                <span className="result-value">{activeRoom.result.paintableArea.toFixed(1)} m²</span>
               </div>
 
               <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
 
               <div className="result-item">
                 <div>
-                  <span className="result-label">Wall Paint ({coats} coats)</span>
+                  <span className="result-label">Wall Paint ({activeRoom.coats} coats)</span>
                   <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                    {result.wallPaint.litresNeeded} Litres required
+                    {activeRoom.result.wallPaint.litresNeeded} Litres required
                   </div>
                 </div>
-                <div className="result-value">£{result.wallPaint.cost.toFixed(2)}</div>
+                <div className="result-value">£{activeRoom.result.wallPaint.cost.toFixed(2)}</div>
               </div>
 
-              {result.trimPaint && (
+              {activeRoom.result.trimPaint && (
                 <div className="result-item" style={{ marginTop: '1rem' }}>
                   <div>
                     <span className="result-label">Trim Paint</span>
                     <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                      {result.trimPaint.litresNeeded} Litres required
+                      {activeRoom.result.trimPaint.litresNeeded} Litres required
                     </div>
                   </div>
-                  <div className="result-value">£{result.trimPaint.cost.toFixed(2)}</div>
+                  <div className="result-value">£{activeRoom.result.trimPaint.cost.toFixed(2)}</div>
                 </div>
               )}
 
-              {result.primerPaint && (
+              {activeRoom.result.primerPaint && (
                 <div className="result-item" style={{ marginTop: '1rem' }}>
                   <div>
                     <span className="result-label">Primer/Undercoat</span>
                     <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                      {result.primerPaint.litresNeeded} Litres required
+                      {activeRoom.result.primerPaint.litresNeeded} Litres required
                     </div>
                   </div>
-                  <div className="result-value">£{result.primerPaint.cost.toFixed(2)}</div>
+                  <div className="result-value">£{activeRoom.result.primerPaint.cost.toFixed(2)}</div>
                 </div>
               )}
 
@@ -394,7 +514,7 @@ export default function Home() {
                 <span>Total Materials Cost</span>
                 <div style={{ textAlign: 'right' }}>
                   <div className="price-highlight">
-                    £{result.totalEstimatedCost.toFixed(2)}
+                    £{activeRoom.result.totalEstimatedCost.toFixed(2)}
                   </div>
                   <button
                     onClick={() => handleSearchPrices()}
@@ -414,7 +534,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Price Search Modal (Inline) */}
               {showPriceModal && (
                 <div style={{
                   marginTop: '1rem',
@@ -443,7 +562,6 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* Location Input */}
                   <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                     <input
                       type="text"
@@ -481,12 +599,12 @@ export default function Home() {
 
                   {isSearching ? (
                     <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
-                      <span style={{ display: 'inline-block', animation: 'pulse 1s infinite' }}>🔍</span> Searching...
+                      Searching...
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {priceResults.length === 0 ? (
-                        <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No results found via Google Shopping.</div>
+                        <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No results found.</div>
                       ) : (
                         priceResults.map((item, idx) => (
                           <a
@@ -502,51 +620,25 @@ export default function Home() {
                               padding: '10px',
                               borderRadius: 'var(--radius-sm)',
                               border: '1px solid rgba(0,0,0,0.03)',
-                              textDecoration: 'none', // Remove underline
-                              color: 'inherit', // Inherit text color
-                              transition: 'transform 0.1s ease, background 0.1s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--surface-2)';
-                              e.currentTarget.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'var(--surface-1)';
-                              e.currentTarget.style.transform = 'translateY(0)';
+                              textDecoration: 'none',
+                              color: 'inherit'
                             }}
                           >
-                            {item.thumbnail ? (
-                              <img src={item.thumbnail} alt="" style={{ width: '48px', height: '48px', objectFit: 'contain', background: 'white', borderRadius: '4px', padding: '2px' }} />
-                            ) : (
-                              <div style={{ width: '48px', height: '48px', background: '#eee', borderRadius: '4px' }}></div>
-                            )}
+                            {item.thumbnail && <img src={item.thumbnail} alt="" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />}
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', lineHeight: '1.2' }}>{item.title}</div>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{item.source} ↗</div>
+                              <div style={{ fontSize: '0.95rem', fontWeight: '600' }}>{item.title}</div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.source}</div>
                             </div>
-                            <div style={{ fontWeight: '700', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>{item.price}</div>
+                            <div style={{ fontWeight: '700', color: 'var(--primary-dark)' }}>{item.price}</div>
                           </a>
                         ))
-                      )}
-                      {priceResults.length > 0 && (
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          marginTop: '0.5rem',
-                          borderTop: '1px solid rgba(0,0,0,0.05)',
-                          paddingTop: '0.5rem'
-                        }}>
-                          <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                            Prices provided by SerpApi
-                          </small>
-                        </div>
                       )}
                     </div>
                   )}
                 </div>
               )}
 
-              {result.estimatedLaborCost && (
+              {activeRoom.result.estimatedLaborCost && (
                 <>
                   <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
                   <div className="result-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
@@ -556,19 +648,18 @@ export default function Home() {
                         Less prep less cost, more prep more cost
                       </small>
 
-                      {/* Interactive Labor Rate Control */}
                       <div className="labor-control-panel">
                         <label className="labor-header">
                           <span>Adjust Preparation Effort:</span>
-                          <strong>£{laborRate}/m²</strong>
+                          <strong>£{activeRoom.laborRate}/m²</strong>
                         </label>
                         <input
                           type="range"
                           min="10"
                           max="40"
                           step="1"
-                          value={laborRate}
-                          onChange={(e) => setLaborRate(Number(e.target.value))}
+                          value={activeRoom.laborRate}
+                          onChange={(e) => updateActiveRoom({ laborRate: Number(e.target.value) })}
                         />
                         <div className="range-labels">
                           <span>£10 (Min Preparation)</span>
@@ -579,9 +670,9 @@ export default function Home() {
 
                     <div style={{ textAlign: 'left', marginTop: '1rem', borderTop: '1px solid var(--surface-1)', paddingTop: '1rem' }}>
                       <div className="result-value" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>
-                        £{Math.round(result.preciseLaborCost)}
+                        £{Math.round(activeRoom.result.preciseLaborCost)}
                       </div>
-                      <small style={{ color: 'var(--text-muted)' }}>Typical range: £{Math.round(result.estimatedLaborCost.min)} - £{Math.round(result.estimatedLaborCost.max)}</small>
+                      <small style={{ color: 'var(--text-muted)' }}>Typical range: £{Math.round(activeRoom.result.estimatedLaborCost.min)} - £{Math.round(activeRoom.result.estimatedLaborCost.max)}</small>
                     </div>
                   </div>
                 </>
@@ -589,10 +680,7 @@ export default function Home() {
               <p className="disclaimer">*Prices are feed via test API, actual prices may vary.</p>
             </div>
           )}
-
         </div>
-
-
       </main>
     </>
   );

@@ -97,8 +97,8 @@ export default function Home() {
     activeRoom?.numWindows,
     activeRoom?.includeCeiling,
     activeRoom?.includeTrim,
-    activeRoom?.laborRate,
-    activeRoom?.includePrimer
+    activeRoom?.includePrimer,
+    activeRoomId
   ]);
 
   const updateActiveRoom = (updates: Partial<Room>) => {
@@ -123,9 +123,9 @@ export default function Home() {
       type: typeId,
       inputMode: 'dimensions',
       customWallArea: '',
-      width: 0,
-      length: 0,
-      height: 0,
+      width: '',
+      length: '',
+      height: '',
       wallProductId: wallProducts[0].id,
       trimProductId: trimProducts[0].id,
       coats: 2,
@@ -320,6 +320,23 @@ export default function Home() {
               title="Click to rename room"
             />
             <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Adjust dimensions and materials for this room.</p>
+            {activeRoom.result && (
+              <div style={{
+                marginTop: '1rem',
+                padding: '0.75rem 1.5rem',
+                background: 'rgba(66, 133, 244, 0.1)',
+                borderRadius: '50px',
+                border: '1px solid rgba(66, 133, 244, 0.2)',
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.5rem'
+              }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Room Total Estimate:</span>
+                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+                  £{((activeRoom.result?.totalEstimatedCost || 0) + (activeRoom.result?.preciseLaborCost || 0)).toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
         </header>
 

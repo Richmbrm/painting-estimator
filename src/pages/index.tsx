@@ -108,9 +108,18 @@ export default function Home() {
 
   const addRoom = (typeId: string) => {
     const type = ROOM_TYPES.find(t => t.id === typeId);
+    let roomName = type?.label || 'New Room';
+
+    if (typeId === 'other') {
+      const customName = window.prompt('Enter room name:', 'Other');
+      if (customName !== null && customName.trim() !== '') {
+        roomName = customName.trim();
+      }
+    }
+
     const newRoom: Room = {
       id: Math.random().toString(36).substr(2, 9),
-      name: type?.label || 'New Room',
+      name: roomName,
       type: typeId,
       inputMode: 'dimensions',
       customWallArea: '',
@@ -289,8 +298,29 @@ export default function Home() {
       <main>
         <header className="header-hero">
           <button className="btn-back" onClick={() => setViewMode('dashboard')}>← Back to Dashboard</button>
-          <h1>{activeRoom.name} Estimate</h1>
-          <p>Adjust dimensions and materials for this room.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+            <input
+              type="text"
+              value={activeRoom.name}
+              onChange={(e) => updateActiveRoom({ name: e.target.value })}
+              style={{
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                textAlign: 'center',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px dashed rgba(66, 133, 244, 0.3)',
+                color: 'var(--primary)',
+                width: '100%',
+                maxWidth: '600px',
+                padding: '0 0.5rem',
+                outline: 'none',
+                letterSpacing: '-0.02em'
+              }}
+              title="Click to rename room"
+            />
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Adjust dimensions and materials for this room.</p>
+          </div>
         </header>
 
         <div className="card">

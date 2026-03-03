@@ -98,6 +98,8 @@ export default function Home() {
     activeRoom?.includeCeiling,
     activeRoom?.includeTrim,
     activeRoom?.includePrimer,
+    activeRoom?.laborRate,
+    activeRoom,
     activeRoomId
   ]);
 
@@ -719,7 +721,7 @@ export default function Home() {
                       <div className="result-value" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>
                         £{Math.round(activeRoom.result.preciseLaborCost)}
                       </div>
-                      <small style={{ color: 'var(--text-muted)' }}>Typical range: £{Math.round(activeRoom.result.estimatedLaborCost.min)} - £{Math.round(activeRoom.result.estimatedLaborCost.max)}</small>
+                      <small style={{ color: 'var(--text-muted)' }}>UK Standard Est: £{Math.round(activeRoom.result.estimatedLaborCost.min)} - £{Math.round(activeRoom.result.estimatedLaborCost.max)}</small>
                     </div>
                   </div>
                 </>

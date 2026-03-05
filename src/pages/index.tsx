@@ -3,6 +3,8 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { calculatePaintEstimate, EstimationResult } from '../utils/calculator';
 import { SUPPLIER_DATA, PaintProduct, getProductById } from '../utils/supplier_data';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Room {
   id: string;
@@ -51,6 +53,27 @@ export default function Home() {
   const [priceResults, setPriceResults] = useState<any[]>([]);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [locationInput, setLocationInput] = useState('');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from LocalStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('opc_estimator_rooms');
+    if (saved) {
+      try {
+        setRooms(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse saved rooms", e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to LocalStorage
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('opc_estimator_rooms', JSON.stringify(rooms));
+    }
+  }, [rooms, isLoaded]);
 
   useEffect(() => {
     if (!activeRoom) return;
@@ -221,6 +244,51 @@ export default function Home() {
     setShowPriceModal(false);
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const totalMaterials = rooms.reduce((sum, r) => sum + (r.result?.totalEstimatedCost || 0), 0);
+    const totalLabor = rooms.reduce((sum, r) => sum + (r.result?.preciseLaborCost || 0), 0);
+    const grandTotal = totalMaterials + totalLabor;
+
+    doc.setFontSize(22);
+    doc.text('OPC Painting Estimate Report', 14, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Project Total: £${grandTotal.toFixed(2)}`, 14, 40);
+    doc.text(`Total Materials: £${totalMaterials.toFixed(2)}`, 14, 47);
+    doc.text(`Total Labour: £${totalLabor.toFixed(2)}`, 14, 54);
+
+    const tableData = rooms.map(room => [
+      room.name,
+      `${room.result?.paintableArea.toFixed(1)} m2`,
+      `£${room.result?.totalEstimatedCost.toFixed(2)}`,
+      `£${room.result?.preciseLaborCost.toFixed(2)}`,
+      `£${((room.result?.totalEstimatedCost || 0) + (room.result?.preciseLaborCost || 0)).toFixed(2)}`
+    ]);
+
+    autoTable(doc, {
+      startY: 65,
+      head: [['Room Name', 'Area', 'Materials', 'Labour', 'Subtotal']],
+      body: tableData,
+    });
+
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text('Disclaimer: Prices are based on current estimates and may vary by region and supplier.', 14, (doc as any).lastAutoTable.finalY + 15);
+
+    doc.save('painting-estimate.pdf');
+  };
+
+  const clearProject = () => {
+    if (window.confirm('Are you sure you want to clear all rooms? This cannot be undone.')) {
+      setRooms([]);
+      localStorage.removeItem('opc_estimator_rooms');
+    }
+  };
+
+  if (!isLoaded) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-1)' }}>Loading your project...</div>;
+
   if (viewMode === 'dashboard') {
     const totalMaterials = rooms.reduce((sum, r) => sum + (r.result?.totalEstimatedCost || 0), 0);
     const totalLabor = rooms.reduce((sum, r) => sum + (r.result?.preciseLaborCost || 0), 0);
@@ -241,6 +309,14 @@ export default function Home() {
           <div className="summary-details">
             <div>Materials: £{totalMaterials.toFixed(2)}</div>
             <div>Labour: £{totalLabor.toFixed(2)}</div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+            <button className="btn-save" onClick={exportToPDF} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
+              📥 Export PDF Report
+            </button>
+            <button onClick={clearProject} style={{ background: 'transparent', color: 'var(--text-muted)', border: '1px solid #ddd', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer' }}>
+              Clear Project
+            </button>
           </div>
         </div>
 
